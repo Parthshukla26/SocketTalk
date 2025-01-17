@@ -1,18 +1,24 @@
 // to maintian the all  the initial and furtther states 
-import {create} from 'zustand'
+import { create } from 'zustand'
 import { axiosInstance } from '../lib/axios'
 import toast from "react-hot-toast";
+import { io } from "socket.io-client"
 
-export const useAuthStore=create((set)=>({
+//changint the end poin tfor producntion 
+const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001/" : "/a"; //producntio changes making http://localhost:5001 to dynaic for the production 
 
-    authUser:null,
-    isSigningUp:false,
-    isLoggingIng:false,
-    isUpdatingProfile:false,
-    isCheckingAuth:true,
-    onlineUsers:[],
+export const useAuthStore = create((set, get) => ({
 
-    //hitting the check auth api in the backend 
+  authUser: null,
+  isSigningUp: false,
+  isLoggingIng: false,
+  isUpdatingProfile: false,
+  isCheckingAuth: true,
+  onlineUsers: [],
+  //socketstate for connecting and dissconnecting 
+  socket: null,
+
+  //hitting the check auth api in the backend 
   // Temporarily modify your checkAuth to test connection
   checkAuth: async () => {
     try {
@@ -20,6 +26,9 @@ export const useAuthStore=create((set)=>({
 
       //user is authenticated 
       set({ authUser: res.data });
+
+      //on refreshing connect the socket
+      get().connectSocket()
 
     } catch (error) {
       console.log("Error in checkAuth:", error);
@@ -37,6 +46,11 @@ export const useAuthStore=create((set)=>({
       //auth the user 
       set({ authUser: res.data });
       toast.success("Account created successfully");
+
+      //on signup connect the socket
+      get().connectSocket()
+
+
     } catch (error) {
       toast.error(error.response.data.message);
     } finally {
@@ -53,6 +67,9 @@ export const useAuthStore=create((set)=>({
       set({ authUser: res.data });
       toast.success("Logged in successfully");
 
+      //on login connect the socket
+      get().connectSocket()
+
     } catch (error) {
       toast.error(error.response.data.message);
     } finally {
@@ -67,6 +84,8 @@ export const useAuthStore=create((set)=>({
       //user is set as null after logout
       set({ authUser: null });
       toast.success("Logged out successfully");
+
+      get().dissconnectSocket()
     } catch (error) {
       toast.error(error.response.data.message);
     }
@@ -89,6 +108,31 @@ export const useAuthStore=create((set)=>({
     } finally {
       set({ isUpdatingProfile: false });
     }
+  },
+
+  connectSocket: () => {
+    const { authUser } = get()
+    if (!authUser || get().socket?.connected) return
+
+    //when the user is connected to the socket server and store the userid 
+    const socket = io(BASE_URL,{
+      query:{
+        userId:authUser._id,
+      },
+    });
+    socket.connect();
+    //update the socket state
+    set({socket:socket})
+
+    socket.on("getOnlineUsers",(userIds)=>{
+      set({onlineUsers:userIds});
+    });
+
+  },
+
+  dissconnectSocket: () => {
+    if(get().socket?.connected) get().socket.disconnect();
+
   }
 
 }))

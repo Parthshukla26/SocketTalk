@@ -6,6 +6,8 @@ import { useChatStore } from "../store/useChatStore";
 
 const ChatHeader = () => {
   const { selectedUser, setSelectedUser } = useChatStore();
+
+  //for displaying the online or offline text status in the header for the user
   const { onlineUsers } = useAuthStore();
 
   return (

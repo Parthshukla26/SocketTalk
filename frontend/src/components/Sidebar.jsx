@@ -7,20 +7,23 @@ import { Users } from "lucide-react";
 const Sidebar = () => {
   const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } = useChatStore();
 
+  //for online or offline sate of the user 
   const { onlineUsers } = useAuthStore();
+
+  //online and offline toggle button state 
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
 
   useEffect(() => {
     getUsers();
   }, [getUsers]);
- 
+
+  
   const filteredUsers = showOnlineOnly
     ? users.filter((user) => onlineUsers.includes(user._id))
     : users;
 
-    //in loading state
+        //in loading state
   if (isUsersLoading) return <SidebarSkeleton />;
-
 
   return (
     <aside className="h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200">
@@ -44,6 +47,7 @@ const Sidebar = () => {
         </div>
       </div>
 {/* mapping over every user and genrating a button */}
+
       <div className="overflow-y-auto w-full py-3">
         {filteredUsers.map((user) => (
           <button
@@ -61,7 +65,6 @@ const Sidebar = () => {
                 alt={user.name}
                 className="size-12 object-cover rounded-full"
               />
-              
               {onlineUsers.includes(user._id) && (
                 <span
                   className="absolute bottom-0 right-0 size-3 bg-green-500 

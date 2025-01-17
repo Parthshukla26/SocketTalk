@@ -2,6 +2,7 @@ import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 
 import cloudinary from "../lib/cloudinary.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 
 //side bar user 
 export const getUsersForSidebar = async (req, res) => {
@@ -72,11 +73,14 @@ export const sendMessage = async (req, res) => {
 
     await newMessage.save();
 
-    
-    // const receiverSocketId = getReceiverSocketId(receiverId);
-    // if (receiverSocketId) {
-    //   io.to(receiverSocketId).emit("newMessage", newMessage);
-    // }
+    //finding the user from prama to send the message then findinf the socket id of that user 
+    const receiverSocketId = getReceiverSocketId(receiverId);
+
+    //emitting the message to the seelcted user 
+    if (receiverSocketId) {
+      //to the selected user 
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
 
     res.status(201).json(newMessage);
   } catch (error) {
